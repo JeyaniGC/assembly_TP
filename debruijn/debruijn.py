@@ -38,8 +38,9 @@ __status__ = "Developpement"
 
 def isfile(path):
     """Check if path is an existing file.
-      :Parameters:
-          path: Path to the file
+       
+       Parameters:
+        path: Path to the file
     """
     if not os.path.isfile(path):
         if os.path.isdir(path):
@@ -71,7 +72,16 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    seq = []
+    """Read dasta file to create a sequence geeerator.
+    
+    Parameters
+    ----------
+    fastq_file : Fastq file containing the sequence it's id and it's quality.
+    
+    Returns
+    -------
+    A sequences generator.
+    """
     with open(fastq_file, "r") as filin:
         for i in filin:
             yield next(filin).strip()
@@ -80,11 +90,39 @@ def read_fastq(fastq_file):
 
 
 def cut_kmer(read, kmer_size):
+    """Read a sequence to create a k-mer generator.
+    
+    Parameters
+    ----------
+    read : str()
+        Represents the sequence to be cut.
+    kmer_size : int()
+        Size of the cut in the sequence.
+
+    Returns
+    -------
+    A k-mer generator.
+    """
+    
     for i in range(len(read)-(kmer_size-1)):
         yield read[i:i+kmer_size]
 
 
 def build_kmer_dict(fastq_file, kmer_size):
+    """Creation of a dictionary whose keys are the different k-mers and whose 
+    value is the occurrence of these k-mers.
+    
+    Parameters
+    ----------
+    fastq_file : A fastq file
+        Contains the id of a sequence, the sequence and its quality.
+    kmer_size : int()
+        Size of the cut in the sequence.
+
+    Returns
+    -------
+    A dictionary listing all k-mers and their occurrences within the fastq file.
+    """
     seq = "".join(list(read_fastq(fastq_file)))
     kmer = cut_kmer(seq, kmer_size)
     dict_kmer = {}
@@ -99,6 +137,8 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
+    
+    
     g = nx.DiGraph()
     
     for node, weight in kmer_dict.items():
@@ -121,12 +161,27 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     return graph
 
 def std(data):
-    pass
+    return statistics.stdev(data)
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    weight_list = std(weight_avg_list)
+
+    if weight_list > 0:
+        best_path_index = path_list[max(weight_avg_list)]
+    elif weight_list == 0:
+        length_std = std(path_length)
+        if length_std > 0:
+            best_path_index = path_list[max(path_length)]
+        elif length_std == 0:
+            best_path_index = randint(0,len(path_list)-1)
+
+    for path in path_list:
+        if path != path_list[best_path_index]:
+            graph = remove_paths(graph, [path], delete_entry_node, delete_sink_node)
+    
+    return graph
 
 def path_average_weight(graph, path):
     return statistics.mean([d["weight"] for (u, v, d) in graph.subgraph(path).edges(data=True)])
