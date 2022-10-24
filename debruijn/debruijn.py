@@ -166,14 +166,15 @@ def std(data):
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=False):
+    
     weight_list = std(weight_avg_list)
 
     if weight_list > 0:
-        best_path_index = path_list[max(weight_avg_list)]
+        best_path_index = weight_avg_list.index(max(weight_avg_list))
     elif weight_list == 0:
         length_std = std(path_length)
         if length_std > 0:
-            best_path_index = path_list[max(path_length)]
+            best_path_index = path_length.index(max(path_length))
         elif length_std == 0:
             best_path_index = randint(0,len(path_list)-1)
 
